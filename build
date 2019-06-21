@@ -1,11 +1,10 @@
 #!/bin/bash
 
-PACKAGE=exa
-DOCKER_TAG=rust
 CWD=`pwd`
 CYAN='\E[1;36m'
 RED='\E[1;31m'
 YELLOW='\E[1;33m'
+GREEN='\E[1;32m'
 BLUE='\E[1;34m'
 
 CENTOS_VERSION=$1
@@ -17,61 +16,79 @@ if [ "$CENTOS_VERSION" == "" ]; then
     exit 1
 fi
 
-echo -e "${BLUE}❯ ${CYAN}${PACKAGE} for Centos ${CENTOS_VERSION}"
-tput sgr0
-
-# Make sure docker exists
-if hash docker 2>/dev/null; then
-    # Generate a Docker image based on env vars and centos version, for use both manually and in CI
-    eval "DOCKER_IMAGE=\$\{DOCKER_RPMBUILD_EL${CENTOS_VERSION}:-jc21/rpmbuild-centos${CENTOS_VERSION}\}"
-    eval "DOCKER_IMAGE=${DOCKER_IMAGE}"
-
-    # Folder setup
-    echo -e "${BLUE}❯ ${YELLOW}Folder setup"
-    tput sgr0
-    rm -rf RPMS/* SRPMS/*
-    mkdir -p {RPMS,SRPMS,DEPS,SPECS,SOURCES}
-
-    # Pull latest builder image
-    echo -e "${BLUE}❯ ${YELLOW}Pulling docker image: ${DOCKER_IMAGE}:${DOCKER_TAG}"
-    tput sgr0
-    docker pull ${DOCKER_IMAGE}:${DOCKER_TAG}
-
-    # Use the build to change the ownership of folders
-    echo -e "${BLUE}❯ ${YELLOW}Temporarily changing ownership"
-    tput sgr0
-    docker run --rm \
-      -v ${CWD}:/home/rpmbuilder/rpmbuild \
-      ${DOCKER_IMAGE}:${DOCKER_TAG} \
-      sudo chown -R rpmbuilder:rpmbuilder /home/rpmbuilder/rpmbuild
-
-    # Do the build
-    echo -e "${BLUE}❯ ${YELLOW}Building ${PACKAGE}"
-    tput sgr0
-    docker run --rm \
-      --name rpmbuild-${BUILD_TAG:-centos${CENTOS_VERSION}-${PACKAGE}} \
-      -v ${CWD}/RPMS:/home/rpmbuilder/rpmbuild/RPMS \
-      -v ${CWD}/SRPMS:/home/rpmbuilder/rpmbuild/SRPMS \
-      -v ${CWD}/SPECS:/home/rpmbuilder/rpmbuild/SPECS \
-      -v ${CWD}/SOURCES:/home/rpmbuilder/rpmbuild/SOURCES \
-      -e GOPROXY=${GOPROXY} \
-      ${DOCKER_IMAGE}:${DOCKER_TAG} \
-      /bin/build-spec -- /home/rpmbuilder/rpmbuild/SPECS/${PACKAGE}.spec
-
-    BUILD_SUCCESS=$?
-
-    # Change ownership back
-    echo -e "${BLUE}❯ ${YELLOW}Reverting ownership"
-    tput sgr0
-    docker run --rm \
-      -v ${CWD}:/home/rpmbuilder/rpmbuild \
-      ${DOCKER_IMAGE}:${DOCKER_TAG} \
-      sudo chown -R `id -u`:`id -g` /home/rpmbuilder/rpmbuild
-
-    exit ${BUILD_SUCCESS}
-else
-    echo -en "${RED}ERROR: "
-    tput sgr0
-    echo "Docker command is not available"
-    exit 1
+DOCKER_TAG=$2
+if [ "$CENTOS_VERSION" == "" ]; then
+  DOCKER_TAG=latest
 fi
+
+# Loop over all Specs in the SPECS folder
+for SPECFILE in SPECS/*.spec; do
+    PACKAGE=${SPECFILE#"SPECS/"}
+    PACKAGE=${PACKAGE%".spec"}
+
+    echo -e "${BLUE}❯ ${GREEN}Building ${CYAN}${PACKAGE} ${GREEN}for Centos ${CENTOS_VERSION}"
+    tput sgr0
+
+    # Make sure docker exists
+    if hash docker 2>/dev/null; then
+        # Generate a Docker image based on env vars and centos version, for use both manually and in CI
+        eval "DOCKER_IMAGE=\$\{DOCKER_RPMBUILD_EL${CENTOS_VERSION}:-jc21/rpmbuild-centos${CENTOS_VERSION}\}"
+        eval "DOCKER_IMAGE=${DOCKER_IMAGE}"
+
+        # Folder setup
+        echo -e "${BLUE}❯ ${YELLOW}Folder setup"
+        tput sgr0
+        rm -rf RPMS/* SRPMS/*
+        mkdir -p {RPMS,SRPMS,DEPS,SPECS,SOURCES}
+        chmod -R 777 {RPMS,SRPMS}
+
+        # Pull latest builder image
+        echo -e "${BLUE}❯ ${YELLOW}Pulling docker image: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+        tput sgr0
+        docker pull ${DOCKER_IMAGE}:${DOCKER_TAG}
+
+        # Use the build to change the ownership of folders
+        echo -e "${BLUE}❯ ${YELLOW}Temporarily changing ownership"
+        tput sgr0
+        docker run --rm \
+          -v ${CWD}:/home/rpmbuilder/rpmbuild \
+          ${DOCKER_IMAGE}:${DOCKER_TAG} \
+          sudo chown -R rpmbuilder:rpmbuilder /home/rpmbuilder/rpmbuild
+
+        # Do the build
+        echo -e "${BLUE}❯ ${YELLOW}Building ${PACKAGE}"
+        tput sgr0
+        docker run --rm \
+          --name rpmbuild-${BUILD_TAG:-centos${CENTOS_VERSION}-${PACKAGE}} \
+          -v ${CWD}/DEPS:/home/rpmbuilder/rpmbuild/DEPS \
+          -v ${CWD}/RPMS:/home/rpmbuilder/rpmbuild/RPMS \
+          -v ${CWD}/SRPMS:/home/rpmbuilder/rpmbuild/SRPMS \
+          -v ${CWD}/SPECS:/home/rpmbuilder/rpmbuild/SPECS \
+          -v ${CWD}/SOURCES:/home/rpmbuilder/rpmbuild/SOURCES \
+          -e GOPROXY=${GOPROXY} \
+          ${DOCKER_IMAGE}:${DOCKER_TAG} \
+          /bin/build-spec -o -r /home/rpmbuilder/rpmbuild/DEPS/*/*.rpm -- /home/rpmbuilder/rpmbuild/SPECS/${PACKAGE}.spec
+
+        BUILD_SUCCESS=$?
+
+        # Change ownership back
+        echo -e "${BLUE}❯ ${YELLOW}Reverting ownership"
+        tput sgr0
+        docker run --rm \
+          -v ${CWD}:/home/rpmbuilder/rpmbuild \
+          ${DOCKER_IMAGE}:${DOCKER_TAG} \
+          sudo chown -R `id -u`:`id -g` /home/rpmbuilder/rpmbuild
+
+        # do we need to exit the loop?
+        if [ $BUILD_SUCCESS -ne 0 ]; then
+            echo -e "${BLUE}❯ ${RED}Exiting due to error"
+            tput sgr0
+            exit ${BUILD_SUCCESS}
+        fi
+    else
+        echo -en "${RED}ERROR: "
+        tput sgr0
+        echo "Docker command is not available"
+        exit 1
+    fi
+done
