@@ -17,7 +17,7 @@ pipeline {
     stage('Build') {
       steps {
         ansiColor('xterm') {
-          sh './build 6'
+          sh './build 6 rust'
         }
       }
     }
