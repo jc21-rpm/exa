@@ -17,7 +17,7 @@ if [ "$CENTOS_VERSION" == "" ]; then
 fi
 
 DOCKER_TAG=$2
-if [ "$CENTOS_VERSION" == "" ]; then
+if [ "$DOCKER_TAG" == "" ]; then
   DOCKER_TAG=latest
 fi
 
