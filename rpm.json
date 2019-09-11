@@ -1,0 +1,7 @@
+{
+  "publish": {
+    "PACKAGE": "exa",
+    "GH_USER": "jc21-rpm",
+    "VERSION": "0.8.0"
+  }
+}
