@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Name:           exa
-Version:        0.8.0
+Version:        0.9.0
 Release:        1%{?dist}
 Summary:        exa is a replacement for ls written in Rust.
 Group:          Applications/System
@@ -49,7 +49,10 @@ rm -rf %{buildroot}
 
 
 %changelog
-* Wed Jul 9 2018 Jamie Curnow <jc@jc21.com> - 0.8.0-1
+* Mon Jul 15 2019 Jamie Curnow <jc@jc21.com> - 0.9.0-1
+- Updated to 0.9.0
+
+* Mon Jul 9 2018 Jamie Curnow <jc@jc21.com> - 0.8.0-1
 - Updated to 0.8.0
 
 * Wed Jun 14 2017 Jamie Curnow <jc@jc21.com> - 0.6.0-1
