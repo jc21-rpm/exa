@@ -8,6 +8,7 @@ Group:          Applications/System
 License:        GPLv2
 URL:            https://github.com/ogham/exa
 BuildRequires:  cmake, libgit2, openssl-devel
+Source:         https://github.com/ogham/exa/archive/v%{version}.tar.gz
 
 %{?el7:BuildRequires: cargo, rust}
 
@@ -22,12 +23,11 @@ fast, and portable.
 
 # buildserver
 %prep
-wget https://github.com/ogham/exa/archive/v%{version}.tar.gz
-tar xzf v%{version}.tar.gz
+%setup -q -n %{name}-%{version}
+
 
 # buildserver
 %build
-cd %{name}-%{version}
 make
 
 
@@ -35,7 +35,7 @@ make
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/bin
-cp %{name}-%{version}/target/release/exa %{buildroot}/usr/bin/
+cp target/release/exa %{buildroot}/usr/bin/
 
 
 # after build on build server
