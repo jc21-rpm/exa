@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Name:           exa
-Version:        0.9.0
+Version:        0.10.0
 Release:        1%{?dist}
 Summary:        exa is a replacement for ls written in Rust.
 Group:          Applications/System
@@ -20,35 +20,28 @@ the original ls, such as viewing the Git status for a directory, or recursing
 into directories with a tree view. exa is written in Rust, so it's small,
 fast, and portable.
 
-
-# buildserver
 %prep
 %setup -q -n %{name}-%{version}
 
-
-# buildserver
 %build
-make
+cargo build --release
 
-
-# buildserver
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/bin
 cp target/release/exa %{buildroot}/usr/bin/
 
-
-# after build on build server
 %clean
 rm -rf %{buildroot}
-
 
 %files
 %defattr(-,root,root,-)
 /usr/bin/exa
 
-
 %changelog
+* Tue Apr 6 2021 Jamie Curnow <jc@jc21.com> - 0.10.0-1
+- Updated to 0.10.0
+
 * Mon Jul 15 2019 Jamie Curnow <jc@jc21.com> - 0.9.0-1
 - Updated to 0.9.0
 

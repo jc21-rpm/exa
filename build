@@ -78,14 +78,6 @@ for SPECFILE in SPECS/*.spec; do
             # If cpp11, use a special command
             # This is a convoluted solution I know.
             DOCKER_COMMAND="/bin/build-spec -o -r /home/rpmbuilder/rpmbuild/DEPS/*/*.rpm -- /home/rpmbuilder/rpmbuild/SPECS/${PACKAGE}.spec"
-            ADDITIONAL_MOUNT=""
-            if [ "$DOCKER_TAG" == "cpp11" ]; then
-               TMPFILE=`mktemp /tmp/rpmbuild.XXXXXXXX`
-               chmod 777 "${TMPFILE}"
-               echo "source /opt/rh/devtoolset-2/enable && /bin/build-spec -o -p python-sphinx -p python-devel -r \"/home/rpmbuilder/rpmbuild/DEPS/*/*.rpm\" /home/rpmbuilder/rpmbuild/SPECS/${PACKAGE}.spec" >> "${TMPFILE}"
-               ADDITIONAL_MOUNT="-v ${TMPFILE}:/tmp/runme.sh"
-               DOCKER_COMMAND="bash /tmp/runme.sh"
-            fi
 
             # Docker Run
             docker run --rm \
@@ -95,7 +87,6 @@ for SPECFILE in SPECS/*.spec; do
               -v ${CWD}/SRPMS:/home/rpmbuilder/rpmbuild/SRPMS \
               -v ${CWD}/SPECS:/home/rpmbuilder/rpmbuild/SPECS \
               -v ${CWD}/SOURCES:/home/rpmbuilder/rpmbuild/SOURCES \
-              ${ADDITIONAL_MOUNT} \
               -e GOPROXY=${GOPROXY} \
               ${DOCKER_IMAGE}:${DOCKER_TAG} \
               ${DOCKER_COMMAND}
