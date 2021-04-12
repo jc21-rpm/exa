@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Name:           exa
-Version:        0.10.0
+Version:        0.10.1
 Release:        1%{?dist}
 Summary:        exa is a replacement for ls written in Rust.
 Group:          Applications/System
@@ -39,6 +39,9 @@ rm -rf %{buildroot}
 /usr/bin/exa
 
 %changelog
+* Tue Apr 13 2021 Jamie Curnow <jc@jc21.com> - 0.10.1-1
+- Updated to 0.10.1
+
 * Tue Apr 6 2021 Jamie Curnow <jc@jc21.com> - 0.10.0-1
 - Updated to 0.10.0
 
