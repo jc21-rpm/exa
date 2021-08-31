@@ -1,53 +1,45 @@
 @Library('jc21') _
 
 pipeline {
-  options {
-    buildDiscarder(logRotator(numToKeepStr: '10'))
-    disableConcurrentBuilds()
-  }
-  agent {
-    label 'rpm'
-  }
-  stages {
-    stage('Prepare') {
-      steps {
-        sh 'docker pull ${DOCKER_CI_TOOLS}'
-      }
-    }
-    stage('Build') {
-      steps {
-        ansiColor('xterm') {
-          sh './build 7 rust'
-        }
-      }
-    }
-    stage('Sign') {
-      steps {
-        ansiColor('xterm') {
-          rpmSign()
-        }
-      }
-    }
-    stage('Publish') {
-      steps {
-        dir(path: 'RPMS') {
-          archiveArtifacts(artifacts: '**/*/*.rpm', caseSensitive: true, onlyIfSuccessful: true)
-        }
-        dir(path: 'SRPMS') {
-          archiveArtifacts(artifacts: '**/*.src.rpm', caseSensitive: true, onlyIfSuccessful: true, allowEmptyArchive: true)
-        }
-        rpmGithubRelease('centos7')
-      }
-    }
-  }
-  post {
-    success {
-      juxtapose event: 'success'
-      sh 'figlet "SUCCESS"'
-    }
-    failure {
-      juxtapose event: 'failure'
-      sh 'figlet "FAILURE"'
-    }
-  }
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '10'))
+		disableConcurrentBuilds()
+		ansiColor('xterm')
+	}
+	agent {
+		label 'rpmbuild'
+	}
+	stages {
+		stage('Build') {
+			steps {
+				sh './build 7 rust'
+			}
+		}
+		stage('Sign') {
+			steps {
+				rpmSign()
+			}
+		}
+		stage('Publish') {
+			steps {
+				dir(path: 'RPMS') {
+					archiveArtifacts(artifacts: '**/*/*.rpm', caseSensitive: true, onlyIfSuccessful: true)
+				}
+				dir(path: 'SRPMS') {
+					archiveArtifacts(artifacts: '**/*.src.rpm', caseSensitive: true, onlyIfSuccessful: true, allowEmptyArchive: true)
+				}
+				rpmGithubRelease('centos7')
+			}
+		}
+	}
+	post {
+		success {
+			juxtapose event: 'success'
+			sh 'figlet "SUCCESS"'
+		}
+		failure {
+			juxtapose event: 'failure'
+			sh 'figlet "FAILURE"'
+		}
+	}
 }
