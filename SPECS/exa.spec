@@ -2,7 +2,7 @@
 
 Name:           exa
 Version:        0.10.1
-Release:        1%{?dist}
+Release:        1
 Summary:        exa is a replacement for ls written in Rust.
 Group:          Applications/System
 License:        GPLv2
