@@ -7,16 +7,12 @@ pipeline {
 		ansiColor('xterm')
 	}
 	agent {
-		label 'rpmbuild'
+		label 'rpm'
 	}
 	stages {
 		stage('Build') {
 			steps {
-				sh './build 7 rust'
-			}
-		}
-		stage('Sign') {
-			steps {
+				rpmBuild(9, 'rust')
 				rpmSign()
 			}
 		}
@@ -28,7 +24,7 @@ pipeline {
 				dir(path: 'SRPMS') {
 					archiveArtifacts(artifacts: '**/*.src.rpm', caseSensitive: true, onlyIfSuccessful: true, allowEmptyArchive: true)
 				}
-				rpmGithubRelease('centos7')
+				rpmGithubRelease('el9')
 			}
 		}
 	}
