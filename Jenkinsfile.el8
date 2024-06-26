@@ -24,7 +24,7 @@ pipeline {
 				dir(path: 'SRPMS') {
 					archiveArtifacts(artifacts: '**/*.src.rpm', caseSensitive: true, onlyIfSuccessful: true, allowEmptyArchive: true)
 				}
-				rpmGithubRelease('el8')
+				rpmGithubRelease()
 			}
 		}
 	}
