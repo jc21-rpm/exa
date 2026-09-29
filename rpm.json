@@ -1,4 +1,5 @@
 {
+  "toolchain": "rust",
   "publish": {
     "PACKAGE": "exa",
     "GH_USER": "jc21-rpm",
